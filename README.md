@@ -1,6 +1,6 @@
 # ThànhNguyễn Profile
 
-![Screenshot of my shell prompt](https://i.pinimg.com/originals/a2/61/8a/a2618ab5e5902a8ec7be34c19a8c8f6d.gif)
+![Screenshot of my shell prompt](https://media.giphy.com/media/cZzNZGwSQN3ZS/giphy.gif)
 
 ### Welcome to my Git
 
