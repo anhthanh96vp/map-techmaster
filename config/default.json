@@ -1,0 +1,14 @@
+{
+	"server": {
+		"HOST": "0.0.0.0",
+		"PORT": 8000
+	},
+	"pg": {
+		"dialect": "postgres",
+		"host": "localhost",
+		"port": 5432,
+		"database": "project_codeto",
+		"user": "admin",
+		"password": "admin"
+	}
+}
