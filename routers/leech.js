@@ -4,69 +4,19 @@ import { SUCCESS, FAILED } from "../constants"
 import request from "request"
 import cheerio from "cheerio"
 
-router.get("/", async (req, res) => {
-	var options = {
-		url:
-			"http://phim14.net/xem-phim/ban-cung-la-nguoi_are-you-human-too.9257.298264.html"
-	}
-	//request lấy body của link
-	request(options, function callback(error, response, body) {
-		if (!error && response.statusCode == 200) {
-			// khai báo cheerio để sử dụng jquery server
-			const $ = cheerio.load(body)
-			let arrServer = []
-			$("#server_list .server_item").each(function() {
-				var arrEpi = []
-				$(this)
-					.find(".episode_list li")
-					.each(function() {
-						arrEpi.push({
-							number: $(this).text(),
-							url: $(this)
-								.find("a")
-								.attr("href")
-						})
-					})
-				console.log("arrEpi :", arrEpi)
-				var serverName = $(this)
-					.find("strong")
-					.text()
-					.replace(":", "")
-					.trim()
-					.toLocaleLowerCase()
-				if (serverName.indexOf("hot") !== -1) {
-					arrServer.push({
-						arrServer: serverName,
-						epis: arrEpi
-					})
-				}
-			})
-			console.log("arrServer :", arrServer)
-		}
-	})
-})
-
-router.get("/link", async (req, res) => {
+router.get("/main", async (req, res) => {
 	let url = "http://www.thaiwater.net/DATA/REPORT/php/scada.php"
 	//request lấy body của link
 	request.get(url, function(error, response, body) {
 		if (!error && response.statusCode == 200) {
 			// khai báo cheerio để sử dụng jquery server
 			const $ = cheerio.load(body)
-			// console.log("title", $("#table10 .style_big_bu a").text())
-			// console.log(
-			// 	"href :",
-			// 	"http://www.thaiwater.net" +
-			// 		$("#table10 .style_big_bu a")
-			// 			.attr("onclick")
-			// 			.replace("open_graph('", "")
-			// 			.replace("')", "")
-			// )
-			$("table").each(function() {
+			$("table tbody").each(function() {
 				let arrTable = []
 				$(this)
 					.find(".style_big_bu a")
 					.each(function() {
+						console.log($(this));
 						let title = $(this).text()
 						let href =
 							"http://www.thaiwater.net" +
@@ -80,15 +30,161 @@ router.get("/link", async (req, res) => {
 						}
 						arrTable.push(table)
 					})
-				console.log(
-					$(this)
-						.find("tr")
-						.attr("bgcolor")
-				)
-				// console.log("arrTable :", arrTable)
+					res.json({
+						arrTable
+					});
+					// let informationNear = $(this).find("tr:last-child")
+					// console.log('informationNear :', informationNear);	
 			})
 		}
 	})
 })
+
+router.get("/mun", async (req, res)=>{
+	let url =  'http://www.thaiwater.net/DATA/REPORT/php/mun_scada/mun_scada.php?lang='
+	request(url, function(error, response, body) {
+		if (!error && response.statusCode == 200) {
+			const $ = cheerio.load(body)
+
+			let objTableLocation = {};
+			let i = 0;
+			$("table tbody").each(function(a) {
+				
+				let link = $(this).find(".modal").attr("href")
+				let location = $(this).find(".style_big_bu").text().trim()
+				
+				let news = $(this).find("tr[bgcolor=#999999]").find("td:first-child").text().trim()
+				let newsTime = $(this).find("tr[bgcolor=#999999]").find("td:nth-child(2)").text().trim()
+
+
+				let arrTableOfRain = []
+				$(this).find("tr").each(function(e){
+					if(e >= 3 && e <= 6){
+						let rain = $(this).find(`td:first-child`).find("a").text().trim()
+						let rainLink = $(this).find(`td:first-child`).find("a").attr("href")
+						let numberCount = $(this).find("td:nth-child(2)").find("strong").text().trim()
+						let unit = $(this).find("td:nth-child(3)").text().trim()
+
+						let tableOfRain = {
+							rain: rain,
+							rainLink: rainLink,
+							numberCount: numberCount,
+							unit: unit,
+						}
+						arrTableOfRain.push(tableOfRain)
+					}	
+				} )
+
+				let arrTableMbar = []
+				$(this).find("tr:last-child").each(function(e){
+					let mbar = $(this).find(`td:first-child`).text().trim()
+					let leftMbar = $(this).find("td:nth-child(2)").text().trim()
+					let valueLeftMbar = $(this).find("td:nth-child(3)").find("strong").text().trim()
+					let rightMbar = $(this).find("td:nth-child(4)").text().trim()
+					let valueRightMbar = $(this).find("td:nth-child(5)").text().trim()
+					
+					let tableMbar = {
+						mbar: mbar,
+						leftMbar: leftMbar,
+						valueLeftMbar: valueLeftMbar,
+						rightMbar: rightMbar,
+						valueRightMbar : valueRightMbar
+					}
+					arrTableMbar.push(tableMbar)
+				})
+				let tableLocation = {
+					location : location,
+					link : link,
+					news: news,
+					newsTime: newsTime,
+					arrTableOfRain : arrTableOfRain,
+					arrTableMbar: arrTableMbar
+				}
+		
+				if (tableLocation.location.trim().length != 0) {
+					i = i + 1 
+					if ( i> 1)  objTableLocation[`key ${i}`] = tableLocation;									
+				}
+				
+			})
+			res.json({
+				objTableLocation
+			});
+		}
+	});
+})
+
+router.get("/mun-upper", async (req, res)=>{
+	let url =  'http://www.thaiwater.net/DATA/REPORT/php/mun_scada/mun_upper_scada.php?lang='
+	request(url, function(error, response, body) {
+		if (!error && response.statusCode == 200) {
+			const $ = cheerio.load(body)
+
+			let objTableLocation = {};
+			let i = 0;
+			$("table tbody").each(function(a) {
+				
+				let link = $(this).find(".modal").attr("href")
+				let location = $(this).find(".style_big_bu").text().trim()
+				
+				let news = $(this).find("tr:nth-child(2)").find("td:first-child").text().trim()
+				let newsTime = $(this).find("tr:nth-child(2)").find("td:nth-child(2)").text().trim()
+
+
+				let arrTableOfRain = []
+				$(this).find("tr").each(function(e){
+					if(e >= 3 && e <= 6){
+						let rain = $(this).find(`td:first-child`).find("a").text().trim()
+						let rainLink = $(this).find(`td:first-child`).find("a").attr("href")
+						let numberCount = $(this).find("td:nth-child(2)").find("strong").text().trim()
+						let unit = $(this).find("td:nth-child(3)").text().trim()
+
+						let tableOfRain = {
+							rain: rain,
+							rainLink: rainLink,
+							numberCount: numberCount,
+							unit: unit,
+						}
+						arrTableOfRain.push(tableOfRain)
+					}	
+				} )
+
+				let arrTableMbar = []
+				$(this).find("tr:last-child").each(function(e){
+					let mbar = $(this).find(`td:first-child`).text().trim()
+					let valueMbar = $(this).find("td:nth-child(2)").text().trim()
+					let unit = $(this).find("td:last-child").text().trim()
+
+					let tableMbar = {
+						mbar: mbar,
+						valueMbar: valueMbar,
+						unit: unit
+					}
+					arrTableMbar.push(tableMbar)
+				})
+				let tableLocation = {
+					location : location,
+					link : link,
+					news: news,
+					newsTime: newsTime,
+					arrTableOfRain : arrTableOfRain,
+					arrTableMbar: arrTableMbar
+				}
+		
+				if (tableLocation.location.trim().length != 0) {
+					i = i + 1 
+					if ( i> 1)  objTableLocation[`key ${i}`] = tableLocation;									
+				}
+				
+			})
+			res.json({
+				objTableLocation
+			});
+		}
+	});
+})
+
+
+
 
 module.exports = router
