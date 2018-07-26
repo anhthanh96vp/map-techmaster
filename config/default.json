@@ -1,7 +1,7 @@
 {
 	"server": {
 		"HOST": "0.0.0.0",
-		"PORT": "7777"
+		"PORT": "8000"
 	},
 	"pg": {
 		"dialect": "postgres",
